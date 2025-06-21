@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>6617870675-vpgvg5f2gf6unh2ccv3g17me3vnm8klj.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.6617870675-vpgvg5f2gf6unh2ccv3g17me3vnm8klj</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDJcVTxgHs__5AqAXdHvJbrfh8rAPDkma0</string>
+	<key>GCM_SENDER_ID</key>
+	<string>6617870675</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.BumperPick.com</string>
+	<key>PROJECT_ID</key>
+	<string>bumperpick-4f802</string>
+	<key>STORAGE_BUCKET</key>
+	<string>bumperpick-4f802.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:6617870675:ios:1dd8e05e980250cd7331a6</string>
+</dict>
+</plist>
