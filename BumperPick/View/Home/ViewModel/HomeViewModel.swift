@@ -81,7 +81,7 @@ class HomeViewModel: ObservableObject {
                 let offerResponse = try decoder.decode(HomeDataResponse.self, from: data)
 
                 print("✅ Offers: \(offerResponse.offers.count), Categories: \(offerResponse.categories.count)")
-
+                print("offerNew test")
                 DispatchQueue.main.async {
                     self.offers = offerResponse.offers.filter { !$0.expire! }
                     self.categories = offerResponse.categories
