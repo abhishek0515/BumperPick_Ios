@@ -42,10 +42,6 @@ struct CartView: View {
                                     .foregroundColor(.black)
                                     .frame(width: 22, height: 22)
                             }
-                            
-//                            Text("Cart")
-//                                .font(.title3.bold())
-//                                .foregroundColor(.black)
                             Text(categoryID == nil && subCategoryID == nil ? "Cart" : "Offers")
                                 .font(.title3.bold())
                                 .foregroundColor(.black)
@@ -123,6 +119,7 @@ struct CartView: View {
                     }
                 }
             }
+            .withLoader(viewModel.isLoading)
         }
         .navigationBarHidden(true)
         .onAppear {

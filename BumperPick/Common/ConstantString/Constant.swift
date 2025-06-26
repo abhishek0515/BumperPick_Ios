@@ -29,6 +29,7 @@ enum AppString {
     static let deleteCartOfferApi = "cart-offers/delete/"
     static let customerProfile = "profile"
     static let customerProfileUpdate = "profile/update"
+    static let refreshTokenApi = "refresh-token"
 
 
     // string constant

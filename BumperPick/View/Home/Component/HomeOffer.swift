@@ -12,19 +12,14 @@ struct HomeOfferCardView: View {
     let offer: Offer
     @State private var selectedMediaIndex = 0
     @State private var navigateToEditScreen = false
- //   @State private var showSheet = false
-  //  @State private var showRemoveSheet = false
     @State private var videoThumbnailCache: [Int: UIImage] = [:]
     @State private var playingVideoIndex: Int? = nil
     @State private var videoPlayers: [Int: AVPlayer] = [:]
-   // @State private var showSuccessAlert = false
     @State private var titleHeight: CGFloat = 0
     @State private var descriptionHeight: CGFloat = 0
 
     var onVisibilityChange: ((Bool) -> Void)? = nil
-    @State private var navigateToDetail = false
-   // @State private var videoThumbnailTapped = false
-
+    @State private var navigateToDetail = false    
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -209,8 +204,29 @@ struct HomeOfferCardView: View {
                     .frame(maxWidth: .infinity)
                     .clipped()
             } else {
-                ProgressView()
-                    .task {
+//                ProgressView()
+//                    .task {
+//                        let mediaUrl = media.url ?? ""
+//                        if let cached = VideoThumbnailCache.shared.object(forKey: mediaUrl as NSString) {
+//                            videoThumbnailCache[index] = cached
+//                        } else {
+//                            Task.detached(priority: .background) {
+//                                if let image = await loadImage(from: mediaUrl) {
+//                                    await MainActor.run {
+//                                        videoThumbnailCache[index] = image
+//                                        VideoThumbnailCache.shared.setObject(image, forKey: mediaUrl as NSString)
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+                Image("gallary")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+                    .onAppear {
+                        // Load only if not already cached
                         let mediaUrl = media.url ?? ""
                         if let cached = VideoThumbnailCache.shared.object(forKey: mediaUrl as NSString) {
                             videoThumbnailCache[index] = cached
@@ -219,12 +235,13 @@ struct HomeOfferCardView: View {
                                 if let image = await loadImage(from: mediaUrl) {
                                     await MainActor.run {
                                         videoThumbnailCache[index] = image
-                                        VideoThumbnailCache.shared.setObject(image, forKey: mediaUrl as! NSString)
+                                        VideoThumbnailCache.shared.setObject(image, forKey: mediaUrl as NSString)
                                     }
                                 }
                             }
                         }
                     }
+
             }
         }
         .tag(index)

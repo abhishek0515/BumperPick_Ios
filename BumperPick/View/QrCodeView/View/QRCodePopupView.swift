@@ -18,9 +18,7 @@ struct QRCodePopupView: View {
 
     let onSaveToCart: () -> Void
     @StateObject private var viewModel = QRCodePopupViewModel()
-
     @State private var showAlert = false
-  //  @State private var alertMessage = ""
     
     var body: some View {
         ZStack {

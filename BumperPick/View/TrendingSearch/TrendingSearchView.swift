@@ -1,3 +1,11 @@
+//
+//  TrendingSearchView.swift
+//  BumperPick
+//
+//  Created by tauseef hussain on 24/06/25.
+//
+
+
 
 import SwiftUI
 
@@ -26,7 +34,7 @@ struct TrendingSearchView: View {
             Text("Trending searches in food & drinks")
                 .font(.headline)
                 .padding(.horizontal)
-               // .padding(.top, 16) // Add some spacing only above WrapHStack
+                .padding(.top, 16) // Add some spacing only above WrapHStack
                 .padding(.bottom, 4)
 
             // Wrap search tags
@@ -47,18 +55,18 @@ struct TrendingSearchView: View {
                 )
             }
             .padding(.horizontal)
-          //  .padding(.top, 8)
+            .padding(.top, -100)
 
            // Spacer()
         }
         .background(Color(.systemGroupedBackground))
+        .navigationBarHidden(true)
     }
 }
 
-
-#Preview {
-    TrendingSearchView()
-}
+//#Preview {
+//    TrendingSearchView()
+//}
 
 struct WrapHStack<Data: RandomAccessCollection, Content: View>: View where Data.Element: Hashable {
     let data: Data
@@ -104,4 +112,3 @@ struct WrapHStack<Data: RandomAccessCollection, Content: View>: View where Data.
         }
     }
 }
-

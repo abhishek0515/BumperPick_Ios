@@ -13,7 +13,6 @@ class QRCodePopupViewModel: ObservableObject {
     @Published var success = false
 
 
-
     func saveToCart(customerId: Int, offerId: Int, token: String, completion: @escaping (Result<SaveToCartResponse, Error>) -> Void) {
         isLoading = true
 
@@ -108,5 +107,5 @@ class QRCodePopupViewModel: ObservableObject {
         }.resume()
     }
 
-
 }
+

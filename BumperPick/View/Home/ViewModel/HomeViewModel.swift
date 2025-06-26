@@ -6,95 +6,71 @@
 //
 import SwiftUI
 
-
 class HomeViewModel: ObservableObject {
     @Published var offers: [Offer] = []
     @Published var categories: [Category] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var didFetchData = false
-
-    func fetchHomeData() {
+    
+    func fetchHomeData(categoryId: Int?, subcategoryId: Int?) {
         didFetchData = true
-        guard var urlComponents = URLComponents(string: AppString.baseUrl + AppString.OfferCustomerApi) else {
+
+        let urlString = AppString.baseUrl + AppString.OfferCustomerApi
+        guard let url = URL(string: urlString) else {
             self.errorMessage = "Invalid URL"
             return
         }
 
-        urlComponents.queryItems = [
-            URLQueryItem(name: "token", value: CustomerSession.shared.token ?? "")
+        // Build request body with nil-safe values
+        let params: [String: Any] = [
+            "token": CustomerSession.shared.token ?? "",
+            "category_id": categoryId ?? "",
+            "subcategory_id": subcategoryId ?? ""
         ]
 
-        guard let url = urlComponents.url else {
-            self.errorMessage = "Invalid URL components"
+        guard let body = try? JSONSerialization.data(withJSONObject: params, options: []) else {
+            self.errorMessage = "Failed to encode body"
             return
         }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
 
         isLoading = true
         errorMessage = nil
 
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                self.isLoading = false
-            }
+        APIManager.shared.request(
+            url: url,
+            method: "POST",
+            body: body,
+            headers: ["Content-Type": "application/json"],
+            responseType: HomeDataResponse.self
+        ) { [weak self] result in
+            guard let self = self else { return }
+            self.isLoading = false
 
-            if let error = error {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Network error: \(error.localizedDescription)"
-                }
-                print("❌ API error:", error.localizedDescription)
-                return
-            }
+            switch result {
+            case .success(let response):
+                print("✅ Offers: \(response.offers.count), Categories: \(response.categories.count)")
+                self.offers = response.offers.filter { !$0.expire! }
+                self.categories = response.categories
 
-            guard let httpResponse = response as? HTTPURLResponse else {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Invalid response from server"
-                }
-                print("❌ Invalid response object")
-                return
-            }
+            case .failure(let error):
+                self.errorMessage = error.localizedDescription
 
-            guard (200...299).contains(httpResponse.statusCode) else {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Server error: \(httpResponse.statusCode)"
-                }
-                print("❌ Server returned status code: \(httpResponse.statusCode)")
-                if let data = data, let rawString = String(data: data, encoding: .utf8) {
-                    print("🔸 Server response body:\n\(rawString)")
-                }
-                return
-            }
-
-            guard let data = data else {
-                DispatchQueue.main.async {
-                    self.errorMessage = "No data received"
-                }
-                print("❌ No data returned by server")
-                return
-            }
-
-            do {
-                let decoder = JSONDecoder()
-                let offerResponse = try decoder.decode(HomeDataResponse.self, from: data)
-
-                print("✅ Offers: \(offerResponse.offers.count), Categories: \(offerResponse.categories.count)")
-                print("offerNew test")
-                DispatchQueue.main.async {
-                    self.offers = offerResponse.offers.filter { !$0.expire! }
-                    self.categories = offerResponse.categories
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Failed to parse data"
-                }
-                print("❌ Decoding error:", error)
-                if let jsonString = String(data: data, encoding: .utf8) {
-                    print("🔍 Raw JSON (for debugging):\n\(jsonString)")
+                switch error {
+                case let APIError.decodingError(decodingError, rawData):
+                    print("❌ Decoding error: \(decodingError)")
+                    if let raw = String(data: rawData, encoding: .utf8) {
+                        print("🔍 Raw JSON: \(raw)")
+                    }
+                case let APIError.serverError(message):
+                    print("❌ Server error: \(message)")
+                case let APIError.unknown(err):
+                    print("❌ Unknown error: \(err)")
+                default:
+                    print("❌ Error:", error.localizedDescription)
                 }
             }
-        }.resume()
+        }
     }
+
 }

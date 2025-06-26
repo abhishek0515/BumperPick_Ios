@@ -13,8 +13,6 @@ struct OfferDetailView: View {
     @State private var isQRCodeSaved = false
     @State private var navigateToHome = false
     
-    
-
     @State private var vStackHeight: CGFloat = 0 // we are taking this because frmae unioun image will manage the height
 
     var body: some View {

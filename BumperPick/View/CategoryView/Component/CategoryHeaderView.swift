@@ -6,7 +6,9 @@
 //
 import SwiftUI
 
+
 struct CategoryHeaderView: View {
+    @Binding var searchText: String  // <-- Add this
     @State private var navigateToCart = false
     @StateObject private var locationManager = LocationManager()
 
@@ -25,14 +27,13 @@ struct CategoryHeaderView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
                         }
-
                         Image("dropDown")
                             .padding(.leading, 4)
-
                         Spacer()
                     }
                 }
                 .buttonStyle(PlainButtonStyle())
+
                 Spacer()
                 HStack(spacing: 16) {
                     Button { navigateToCart = true } label: {
@@ -49,8 +50,25 @@ struct CategoryHeaderView: View {
             }
             .padding()
             .foregroundColor(.white)
+            
+            // 🔍 Search bar
+            HStack {
+                Image(systemName: "magnifyingglass").foregroundColor(.gray)
+                TextField("Search for category", text: $searchText)  // <-- BINDING
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+            }
+            .padding()
+            .background(Color.white)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+            )
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+            .padding(.horizontal) // ✅ Add this line
+            
 
-            // 🔹 Navigate to cart
             NavigationLink(destination: CartView(), isActive: $navigateToCart) {
                 EmptyView()
             }
@@ -68,12 +86,12 @@ struct CategoryHeaderView: View {
         )
         .clipShape(RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight]))
     }
-    
+
     private var locationTitle: String {
          if let placemark = locationManager.currentPlacemark {
              if let subLocality = placemark.subLocality,
                 let thoroughfare = placemark.thoroughfare {
-                 return "\(subLocality), \(thoroughfare)" //sector49 , shona road from sublocality + throughfare
+                 return "\(subLocality), \(thoroughfare)"
              }
          }
          return "Detecting location..."
@@ -81,13 +99,8 @@ struct CategoryHeaderView: View {
 
      private var locationSubtitle: String {
          if let placemark = locationManager.currentPlacemark {
-             return placemark.locality ?? "Gurugram" // grugram shona road from localitu + street
+             return placemark.locality ?? "Gurugram"
          }
          return ""
      }
-    
-//    if let location = locationManager.currentLocation {
-//        Text("Lat: \(location.coordinate.latitude), Lon: \(location.coordinate.longitude)")
-//    }
-    
 }

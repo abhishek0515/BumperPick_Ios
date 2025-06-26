@@ -14,34 +14,55 @@ struct HomeView: View {
     @StateObject private var locationManager = LocationManager()
     @State private var showPermissionPopup = false
     @EnvironmentObject var customerSession: CustomerSession
+    var categoryID: Int?
+    var subCategoryID: Int?
+    @Environment(\.dismiss) private var dismiss
+    @State private var showTrendingSearch = false
+
     
     var body: some View {
         if customerSession.isSessionLoaded {
             if let _ = customerSession.token {
         ScrollView {
             VStack(spacing: 16) {
-                HomeHeaderSection(categories: viewModel.categories)
-                exploreEventsCard
-                trendingOffersCarousel
-                HorizontalFilterBar()
-                
-                // BumperPick Choice Label
-                HStack {
-                    Image("leftArrow")
-                        .resizable()
-                        .frame(width: 10, height: 10)
-                        .aspectRatio(contentMode: .fit)
-                    
-                    Text("BumperPick Choice")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Image("rightArrow")
-                        .resizable()
-                        .frame(width: 10, height: 10)
-                        .aspectRatio(contentMode: .fit)
+                if categoryID == nil && subCategoryID == nil {
+                   // HomeHeaderSection(categories: viewModel.categories, searchText: $searchText)
+                    HomeHeaderSection(
+                        categories: viewModel.categories,
+                        searchText: $searchText,
+                        onSearchTapped: {
+                            if !showTrendingSearch {
+                                showTrendingSearch = true
+                                searchText = ""
+                            }
+                        }
+                    )
+                    exploreEventsCard
+                    trendingOffersCarousel
+                    HorizontalFilterBar()
+                    HStack {
+                        Image("leftArrow")
+                            .resizable()
+                            .frame(width: 10, height: 10)
+                            .aspectRatio(contentMode: .fit)
+                        
+                        Text("BumperPick Choice")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        
+                        Image("rightArrow")
+                            .resizable()
+                            .frame(width: 10, height: 10)
+                            .aspectRatio(contentMode: .fit)
+                    }
+                } else {
+                    CustomHeaderViewNew(
+                        title: "Offers",
+                        showBackButton: true,
+                        backAction: { dismiss() },
+                        searchText: $searchText, searchPlaceholder: "Search offer"    // ✅ This will now work
+                    )
                 }
-                
                 // Offers List
                 LazyVStack(spacing: -10) {
                     let filteredOffers = viewModel.offers.filter {
@@ -72,14 +93,20 @@ struct HomeView: View {
                 .coordinateSpace(name: "OfferScroll")
                 // .padding(.horizontal)
                 .padding(.bottom, 20) // extra space to avoid clipping
+                
+                NavigationLink(destination: TrendingSearchView(), isActive: $showTrendingSearch) {
+                    EmptyView()
+                }
+                .hidden()
+
             }
-            // .padding(.top)
+            .withLoader(viewModel.isLoading)
         }
         .background(Color(.systemGroupedBackground))
         .ignoresSafeArea(edges: .top)
         .onAppear {
             if !viewModel.didFetchData {
-                viewModel.fetchHomeData()
+                viewModel.fetchHomeData(categoryId: categoryID, subcategoryId: subCategoryID)
             }
 //            viewModel.fetchHomeData()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -87,6 +114,7 @@ struct HomeView: View {
             }
         }
         .withLocationPermissionPopup(locationManager: locationManager, isPresented: $showPermissionPopup)
+        .navigationBarHidden(true)
     }
   }
 }

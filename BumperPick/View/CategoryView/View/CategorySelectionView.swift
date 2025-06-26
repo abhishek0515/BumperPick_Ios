@@ -24,7 +24,8 @@ struct CategorySelectionView: View {
         NavigationView {
             VStack(spacing: 0) {
               //  headerSection
-                CategoryHeaderView()
+               // CategoryHeaderView()
+                CategoryHeaderView(searchText: $searchText)
                 categoryHeaderTitleSection()
                 ScrollView {
                     LazyVStack(spacing: 12) {
@@ -46,6 +47,7 @@ struct CategorySelectionView: View {
             }
             .edgesIgnoringSafeArea(.top)
             .navigationBarHidden(true)
+            .withLoader(viewModel.isLoading)
         }
     }
     

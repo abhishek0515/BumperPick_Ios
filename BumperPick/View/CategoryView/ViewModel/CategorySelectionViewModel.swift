@@ -14,8 +14,7 @@ class CategorySelectionViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     func fetchCategories() {
-        let urlString = AppString.categoriesApi
-        guard let url = URL(string: urlString) else {
+        guard let url = URL(string: AppString.categoriesApi) else {
             errorMessage = "Invalid URL"
             return
         }
@@ -23,60 +22,38 @@ class CategorySelectionViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            DispatchQueue.main.async {
-                self.isLoading = false
+        APIManager.shared.request(
+            url: url,
+            method: "GET",
+            headers: ["Content-Type": "application/json"],
+            responseType: CategoryResponse.self
+        ) { [weak self] result in
+            guard let self = self else { return }
+            self.isLoading = false
 
-                if let error = error {
-                    self.errorMessage = error.localizedDescription
-                    return
-                }
+            switch result {
+            case .success(let response):
+                self.categories = response.data
+                print("✅ Categories fetched:", response.data.count)
 
-                guard let data = data else {
-                    self.errorMessage = "No data received"
-                    return
-                }
+            case .failure(let error):
+                self.errorMessage = error.localizedDescription
 
-                //from here
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    DispatchQueue.main.async {
-                        self.errorMessage = "Invalid response from server."
+                switch error {
+                case let APIError.decodingError(decodingError, rawData):
+                    print("❌ Decoding error:", decodingError)
+                    if let raw = String(data: rawData, encoding: .utf8) {
+                        print("🔍 Raw JSON:\n\(raw)")
+                        self.errorMessage = raw
                     }
-                    return
-                }
-                
-                guard (200...299).contains(httpResponse.statusCode) else {
-                    DispatchQueue.main.async {
-                        if let  rawString = String(data: data, encoding: .utf8) {
-                                if let data = rawString.data(using: .utf8) {
-                                    do {
-                                        if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-                                           let message = json["message"] as? String {
-    //                                        self?.alertMessage = message
-                                            self.errorMessage = rawString
-                                            print("rawString: :\(rawString)")
-                                    }
-
-                                    } catch {
-                                        print("Failed to parse JSON: \(error)")
-                                    }
-                                }
-                            }
-                        
-                    }
-                    return
-                }
-
-                do {
-                    let decoded = try JSONDecoder().decode(CategoryResponse.self, from: data)
-                    self.categories = decoded.data
-                    if let jsonString = String(data: data, encoding: .utf8) {
-                        print("🔍 success JSON (for debugging):\n\(jsonString)")
-                    }
-                } catch {
-                    self.errorMessage = "Failed to decode: \(error.localizedDescription)"
+                case let APIError.serverError(message):
+                    print("❌ Server error:", message)
+                case let APIError.unknown(err):
+                    print("❌ Unknown error:", err)
+                default:
+                    print("❌ General error:", error.localizedDescription)
                 }
             }
-        }.resume()
+        }
     }
 }
