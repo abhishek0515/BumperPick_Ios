@@ -68,9 +68,9 @@ struct CategoryHeaderView: View {
             .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
             .padding(.horizontal) // ✅ Add this line
             
-
-            NavigationLink(destination: CartView(), isActive: $navigateToCart) {
-                EmptyView()
+            // Add spacing only if there's location data
+            if !locationTitle.isEmpty || !locationSubtitle.isEmpty {
+                Spacer().frame(height: 10)
             }
         }
         .padding(.top, 50)
@@ -85,6 +85,9 @@ struct CategoryHeaderView: View {
             )
         )
         .clipShape(RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight]))
+        .navigationDestination(isPresented: $navigateToCart) {
+            CartView(isCart: true, isFavourite: false)
+        }
     }
 
     private var locationTitle: String {

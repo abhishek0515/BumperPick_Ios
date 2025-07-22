@@ -8,6 +8,9 @@
 //
 import SwiftUI
 import AVKit
+import WebKit
+//import SafariServices
+
 
 struct DosaBadgeShape: Shape {
     func path(in rect: CGRect) -> Path {
@@ -365,5 +368,174 @@ extension Optional where Wrapped == String {
     var bound: String {
         get { self ?? "" }
         set { self = newValue }
+    }
+}
+
+struct YouTubeLiveWebView: UIViewRepresentable {
+    let videoID: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView()
+        webView.scrollView.isScrollEnabled = false
+        webView.configuration.allowsInlineMediaPlayback = true
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        let embedHTML = """
+        <html>
+        <head>
+            <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0">
+        </head>
+        <body style="margin:0;padding:0;">
+            <iframe
+                width="100%"
+                height="100%"
+                src="https://www.youtube.com/embed/\(videoID)?autoplay=1&playsinline=1"
+                frameborder="0"
+                style="border:none;overflow:hidden;"
+                allow="autoplay; encrypted-media"
+            ></iframe>
+        </body>
+        </html>
+        """
+        webView.loadHTMLString(embedHTML, baseURL: nil)
+    }
+}
+
+
+
+//MARK: facebook live stream
+//struct FacebookLiveWebView: UIViewRepresentable {
+//    let liveURL: String // Must be a public live video URL
+//
+//    func makeUIView(context: Context) -> WKWebView {
+//        let config = WKWebViewConfiguration()
+//        config.allowsInlineMediaPlayback = true
+//        config.mediaTypesRequiringUserActionForPlayback = []
+//        config.allowsPictureInPictureMediaPlayback = true
+//
+//        let webView = WKWebView(frame: .zero, configuration: config)
+//        webView.scrollView.isScrollEnabled = false
+//        return webView
+//    }
+//
+//    func updateUIView(_ webView: WKWebView, context: Context) {
+//        guard let encodedURL = liveURL.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return }
+//
+//        let embedHTML = """
+//        <html>
+//            <body style="margin:0;padding:0;">
+//                <iframe 
+//                    src="https://www.facebook.com/plugins/video.php?href=\(encodedURL)&show_text=false&autoplay=1" 
+//                    width="100%" 
+//                    height="100%" 
+//                    style="border:none;overflow:hidden" 
+//                    scrolling="no" 
+//                    frameborder="0" 
+//                    allowfullscreen="true" 
+//                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+//                </iframe>
+//            </body>
+//        </html>
+//        """
+//
+//        webView.loadHTMLString(embedHTML, baseURL: nil)
+//    }
+//}
+
+struct FacebookLiveWebView: UIViewRepresentable {
+    let videoURL: String // Full Facebook video URL
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.allowsInlineMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
+        config.allowsPictureInPictureMediaPlayback = true
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.scrollView.isScrollEnabled = false
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        guard let encodedURL = videoURL.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+            return
+        }
+
+        let embedHTML = """
+        <html>
+        <body style="margin:0;padding:0;">
+        <iframe 
+            src="https://www.facebook.com/plugins/video.php?href=\(encodedURL)&show_text=false&autoplay=1" 
+            width="100%" 
+            height="100%" 
+            style="border:none;overflow:hidden;" 
+            scrolling="no" 
+            frameborder="0" 
+            allowfullscreen="true" 
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+        </iframe>
+        </body>
+        </html>
+        """
+
+        webView.loadHTMLString(embedHTML, baseURL: nil)
+    }
+}
+
+struct InstagramPostWebView: UIViewRepresentable {
+    let postURL: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        return WKWebView()
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        let html = """
+        <html>
+        <body style="margin:0;padding:0;">
+        <iframe
+            src="https://www.instagram.com/p/\(postURL)/embed"
+            width="100%" height="600"
+            frameborder="0"
+            scrolling="no"
+            allowtransparency="true">
+        </iframe>
+        </body>
+        </html>
+        """
+        webView.loadHTMLString(html, baseURL: nil)
+    }
+}
+
+//struct SafariInstagramView: UIViewControllerRepresentable {
+//    let url: URL
+//
+//    func makeUIViewController(context: Context) -> SFSafariViewController {
+//        return SFSafariViewController(url: url)
+//    }
+//
+//    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+//}
+
+
+func resizeImage(_ image: UIImage, to width: CGFloat) -> UIImage {
+    let scale = width / image.size.width
+    let height = image.size.height * scale
+    let size = CGSize(width: width, height: height)
+
+    UIGraphicsBeginImageContextWithOptions(size, false, 1.0)
+    image.draw(in: CGRect(origin: .zero, size: size))
+    let newImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+
+    return newImage ?? image
+}
+
+
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
     }
 }

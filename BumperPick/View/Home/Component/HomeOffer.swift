@@ -17,38 +17,41 @@ struct HomeOfferCardView: View {
     @State private var videoPlayers: [Int: AVPlayer] = [:]
     @State private var titleHeight: CGFloat = 0
     @State private var descriptionHeight: CGFloat = 0
-
+    @State private var bannerImage: UIImage? = nil
+    @State private var rating: Int = 2
     var onVisibilityChange: ((Bool) -> Void)? = nil
-    @State private var navigateToDetail = false    
+    @State private var navigateToDetail = false
+    
+    var favrouiteOffer: () -> Void
+   // @Binding var didToggleFavourite: Bool
+
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            mediaCarouselView(for: offer)
-            offerDetailsView
+            if let isAds = offer.isAds, !isAds {
+                mediaCarouselView(for: offer)
+                offerDetailsView
+            } else if offer.isAds == true {
+                mediaCarouselView(for: offer)
+            }
+
         }
         .background(Color.white)
         .cornerRadius(16)
         .shadow(radius: 1)
         .padding()
-        
-        NavigationLink(
-               destination: OfferDetailView(offer: offer),
-               isActive: $navigateToDetail
-           ) {
-               EmptyView()
-           }
-           .hidden()
-        
+        .navigationDestination(isPresented: $navigateToDetail) {
+            OfferDetailView(offerID: "\(offer.id ?? 0)", isQRShow: true)
+        }
         .onScrollVisibilityChange(coordinateSpace: "OfferScroll", visibleHeight: 300) { isVisible in
             handleVisibilityChange(isVisible: isVisible)
         }
-        .onChange(of: selectedMediaIndex) { newIndex in
+        .onChange(of: selectedMediaIndex) { oldValue, newIndex in
             handleMediaIndexChange(newIndex: newIndex)
         }
         .onAppear { onVisibilityChange?(true) }
         .onDisappear { onVisibilityChange?(false) }
     }
-
 
     @ViewBuilder
     private func mediaCarouselView(for offer: Offer) -> some View {
@@ -58,38 +61,72 @@ struct HomeOfferCardView: View {
                     let media = (offer.media ?? [])[index]
 
                     ZStack {
-                        if media.type == "image" {
+                        if media.type == "ads" {
+                            imageView(for: media, index: index)
+                        } else if media.type == "image" {
                             imageView(for: media, index: index)
                         } else {
                             videoView(for: media, index: index)
                         }
-                        mediaOverlay(for: media, at: index, total: offer.media?.count ?? 0, quantity: offer.quantity ?? 0)
+                        if let isAds = offer.isAds {
+                            mediaOverlay(for: media, at: index, total: offer.media?.count ?? 0, quantity: offer.quantity ?? 0, isAds: isAds)
+                        }
                     }
                     .tag(index)
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             .frame(height: UIScreen.main.bounds.width * 9 / 16)
-            favrouiteButton
-        }
-    }
+            if let isAds = offer.isAds {
+                if !isAds {
+                    favrouiteButton(isFavourited: offer.isFavourited ?? false)
 
-    private var favrouiteButton: some View {
-        VStack {
-            Button(action: {
-                
-            }) {
-                Image("heart")
-                    .padding()
-                    .frame(width: 40, height: 40)
-                    .cornerRadius(5)
+                }
             }
-
-            .padding(8)
         }
     }
 
-    private func mediaOverlay(for media: Media, at index: Int, total: Int, quantity: Int) -> some View {
+//    private func favrouiteButton(isFavourited: Bool) -> some View {
+//        VStack {
+//            Button(action: {
+//                favrouiteOffer()
+//            }) {
+//                Image(isFavourited ? "heartFill" : "heart") // make sure both assets exist
+//                    .resizable()
+//                     .aspectRatio(contentMode: .fit)
+//                     .frame(width: 40, height: 40)
+//            }
+//            .padding(8)
+//        }
+//    }
+    
+    private func favrouiteButton(isFavourited: Bool) -> some View {
+        VStack(spacing: 0) {
+            Button(action: {
+                favrouiteOffer()
+            }) {
+                Image(isFavourited ? "heartFill" : "heart") // make sure both assets exist
+                    .resizable()
+                     .aspectRatio(contentMode: .fit)
+                     .frame(width: 40, height: 40)
+            }
+            .padding(8)
+            
+            Button(action: {
+                print("share item :\(offer.title ?? "")")
+            }) {
+                Image("share1") // make sure both assets exist
+                    .resizable()
+                     .aspectRatio(contentMode: .fit)
+                     .frame(width: 40, height: 40)
+            }
+          //  .padding(8)
+
+        }
+    }
+    
+
+    private func mediaOverlay(for media: Media, at index: Int, total: Int, quantity: Int, isAds: Bool) -> some View {
         VStack {
             Spacer()
             HStack {
@@ -104,8 +141,8 @@ struct HomeOfferCardView: View {
                         }
                     }
                     HStack {
-                      //  let itemQuantity = "\(offer.quantity)"
-                        Text("\(quantity) left") // Replace with dynamic value if needed
+                        let itemQuantity = (offer.isUnlimited == 1) ? "Until Stock Last" : "\(offer.quantity ?? 0) left"
+                        Text(itemQuantity)
                             .font(.footnote)
                             .foregroundColor(.black)
                             .padding(.horizontal, 12)
@@ -123,14 +160,18 @@ struct HomeOfferCardView: View {
         ZStack {
             // Underlying content
             VStack(alignment: .leading, spacing: 10) {
-                Text(offer.title ?? "")
-                    .font(.headline)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .lineLimit(nil)
-                    .background(GeometryReader { geo in
-                        Color.clear.onAppear { titleHeight = geo.size.height }
-                    })
-
+                HStack(alignment: .top) {
+                    Text(offer.title ?? "")
+                        .font(.headline)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(nil)
+                        .background(GeometryReader { geo in
+                            Color.clear.onAppear { titleHeight = geo.size.height }
+                        })
+                    Spacer()
+                    let averageRating = Int(Double(offer.average_rating ?? "0") ?? 0.0)//Int(Double(offer.average_rating ?? 0))
+                    RatingView(rating: .constant(averageRating), isInteractive: false, starSize: 14)
+                }
                 HStack(alignment: .top) {
                     Image("markerBlack")
                         .foregroundColor(.black)
@@ -204,22 +245,6 @@ struct HomeOfferCardView: View {
                     .frame(maxWidth: .infinity)
                     .clipped()
             } else {
-//                ProgressView()
-//                    .task {
-//                        let mediaUrl = media.url ?? ""
-//                        if let cached = VideoThumbnailCache.shared.object(forKey: mediaUrl as NSString) {
-//                            videoThumbnailCache[index] = cached
-//                        } else {
-//                            Task.detached(priority: .background) {
-//                                if let image = await loadImage(from: mediaUrl) {
-//                                    await MainActor.run {
-//                                        videoThumbnailCache[index] = image
-//                                        VideoThumbnailCache.shared.setObject(image, forKey: mediaUrl as NSString)
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
                 Image("gallary")
                     .resizable()
                     .scaledToFill()
@@ -241,7 +266,6 @@ struct HomeOfferCardView: View {
                             }
                         }
                     }
-
             }
         }
         .tag(index)

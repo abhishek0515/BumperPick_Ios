@@ -37,7 +37,7 @@ struct LoginView: View {
                             .keyboardType(.phonePad)
                             .frame(width: 50)
                             .padding(.leading, 4)
-                            .onChange(of: viewModel.countryCode) { newValue in
+                            .onChange(of: viewModel.countryCode) { oldValue, newValue in
                                 // Ensure it starts with + and contains only digits after
                                 if !newValue.hasPrefix("+") {
                                     viewModel.countryCode = "+" + newValue.filter { $0.isNumber }
@@ -52,7 +52,7 @@ struct LoginView: View {
 
                         TextField(AppString.enterYourMobileNumber, text: $viewModel.phoneNumber)
                             .keyboardType(.numberPad)
-                            .onChange(of: viewModel.phoneNumber) { newValue in
+                            .onChange(of: viewModel.phoneNumber) { oldValue, newValue in
                                 if newValue.count > 10 {
                                     viewModel.phoneNumber = String(newValue.prefix(10))
                                 }
@@ -67,20 +67,6 @@ struct LoginView: View {
                     )
                     .cornerRadius(10)
                     .padding(.horizontal, 20)
-
-                    //till
-                    
-//                    HStack(alignment: .center) {
-//                        Button(action: {
-//                            viewModel.isTermsAccepted.toggle()
-//                        }) {
-//                            Image(systemName: viewModel.isTermsAccepted ? "checkmark.square.fill" : "square")
-//                                .foregroundColor(Color(AppString.colorPrimaryColor))
-//                        }
-//                        Text(AppString.termsAndConditions)
-//                            .font(.footnote)
-//                    }
-//                    .padding(.horizontal, 20)
                     
                     HStack(alignment: .center) {
                         Button(action: {

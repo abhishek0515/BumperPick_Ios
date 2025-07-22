@@ -39,12 +39,15 @@ class EditProfileViewModel: ObservableObject {
         body.append(convertFormField(named: "token", value: token, using: boundary))
 
         // Add image if exists
-        if let data = imageData {
-            body.append(convertFileData(fieldName: "image",
-                                        fileName: "profile.jpg",
-                                        mimeType: "image/jpeg",
-                                        fileData: data,
-                                        using: boundary))
+        if let data = imageData, let image = UIImage(data: data) {
+            let resizedImage = resizeImage(image, to: 800) // optional
+            if let compressedData = resizedImage.jpegData(compressionQuality: 0.3) {
+                body.append(convertFileData(fieldName: "image",
+                                            fileName: "profile.jpg",
+                                            mimeType: "image/jpeg",
+                                            fileData: compressedData,
+                                            using: boundary))
+            }
         }
 
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)

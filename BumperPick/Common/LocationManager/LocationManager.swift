@@ -12,41 +12,50 @@ import Combine
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
+
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var currentLocation: CLLocation?
     @Published var currentPlacemark: CLPlacemark?
+    @Published var showLocationDisabledAlert: Bool = false
 
     override init() {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
+
+        DispatchQueue.global(qos: .background).async {
+            let servicesEnabled = CLLocationManager.locationServicesEnabled()
+            DispatchQueue.main.async {
+                if !servicesEnabled {
+                    self.showLocationDisabledAlert = true
+                }
+            }
+        }
+
         self.authorizationStatus = locationManager.authorizationStatus
     }
 
     func requestPermission() {
-        if CLLocationManager.locationServicesEnabled() {
-            switch locationManager.authorizationStatus {
-            case .notDetermined:
-                locationManager.requestWhenInUseAuthorization() // ✅ safe here
+        locationManager.requestWhenInUseAuthorization()
+    }
+
+    // iOS 14+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        DispatchQueue.main.async {
+            self.authorizationStatus = manager.authorizationStatus
+
+            switch self.authorizationStatus {
             case .authorizedWhenInUse, .authorizedAlways:
-                locationManager.startUpdatingLocation()
+                self.locationManager.startUpdatingLocation()
+            case .denied, .restricted:
+                self.locationManager.stopUpdatingLocation()
             default:
                 break
             }
         }
     }
 
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        authorizationStatus = manager.authorizationStatus
-
-        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
-            locationManager.startUpdatingLocation()
-        }
-    }
-
-
-
-    // Optional: iOS <14
+    // Optional: for iOS <14 fallback
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         DispatchQueue.main.async {
             self.authorizationStatus = status
@@ -69,7 +78,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             self.currentLocation = latestLocation
         }
 
-        // Reverse geocoding on a background thread
+        // Reverse geocode on background thread
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(latestLocation) { placemarks, error in
             guard error == nil, let placemark = placemarks?.first else {

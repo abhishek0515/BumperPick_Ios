@@ -61,7 +61,7 @@ class VerifyOtpViewModel: ObservableObject {
             switch result {
             case .success(let response):
                 if response.code == 200 {
-                    CustomerSession.shared.saveSession(from: response)
+                    CustomerSession.shared.saveSession(from: response, method: .phone)
                     self.navigateToHome = true
                 } else {
                     self.alertMessage = response.message

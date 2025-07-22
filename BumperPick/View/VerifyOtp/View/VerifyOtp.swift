@@ -79,7 +79,7 @@ struct VerifyOtp: View {
                                 .stroke(Color.gray.opacity(0.4), lineWidth: 1)
                         )
 
-                        .onChange(of: viewModel.otpFields[index]) { newValue in
+                        .onChange(of: viewModel.otpFields[index]) { oldValue, newValue in
                             if newValue.count > 1 {
                                 viewModel.otpFields[index] = String(newValue.prefix(1))
                             }
@@ -93,9 +93,9 @@ struct VerifyOtp: View {
             .frame(maxWidth: .infinity, alignment: .center)
 
 
-            NavigationLink(destination: HomeTabView(startingTab: .home), isActive: $viewModel.navigateToHome) {
-                EmptyView()
-            }
+//            NavigationLink(destination: HomeTabView(startingTab: .home), isActive: $viewModel.navigateToHome) {
+//                EmptyView()
+//            }
         
             Spacer()
             Button(action: {
@@ -175,6 +175,9 @@ struct VerifyOtp: View {
             } else {
                 isTimerRunning = false
             }
+        }
+        .navigationDestination(isPresented: $viewModel.navigateToHome) {
+            HomeTabView(startingTab: .home)
         }
 
     }

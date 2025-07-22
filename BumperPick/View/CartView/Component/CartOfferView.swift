@@ -12,22 +12,19 @@ struct CartOfferView: View {
     let offer: Offer
     @State private var selectedMediaIndex = 0
     @State private var navigateToEditScreen = false
- //   @State private var showSheet = false
-  //  @State private var showRemoveSheet = false
     @State private var videoThumbnailCache: [Int: UIImage] = [:]
     @State private var playingVideoIndex: Int? = nil
     @State private var videoPlayers: [Int: AVPlayer] = [:]
-   // @State private var showSuccessAlert = false
     @State private var titleHeight: CGFloat = 0
     @State private var descriptionHeight: CGFloat = 0
-
     var onVisibilityChange: ((Bool) -> Void)? = nil
-   // @State private var navigateToDetail = false
-   // @State private var videoThumbnailTapped = false
     @State private var showQRSheet = false
     let cartId: Int       // 🔸 Add this for delete cartoffer we used this
     @ObservedObject var viewModel: CartViewModel
-    
+    let isCart: Bool
+    let isFavourite: Bool
+    @State private var navigateToDetail = false
+
     var body: some View {
         ZStack {
             VStack(alignment: .leading, spacing: 8) {
@@ -42,7 +39,7 @@ struct CartOfferView: View {
             .onScrollVisibilityChange(coordinateSpace: "OfferScroll", visibleHeight: 300) { isVisible in
                 handleVisibilityChange(isVisible: isVisible)
             }
-            .onChange(of: selectedMediaIndex) { newIndex in
+            .onChange(of: selectedMediaIndex) { oldValue, newIndex in
                 handleMediaIndexChange(newIndex: newIndex)
             }
             .onAppear { onVisibilityChange?(true) }
@@ -56,7 +53,10 @@ struct CartOfferView: View {
             }
         }
         .alert(isPresented: $viewModel.showAlert) {
-            Alert(title: Text("Delete Offer"), message: Text(viewModel.alerMessage ?? ""), dismissButton: .default(Text("OK")))
+            Alert(title: Text(viewModel.alertTitle), message: Text(viewModel.alerMessage ?? ""), dismissButton: .default(Text("OK")))
+        }
+        .navigationDestination(isPresented: $navigateToDetail) {
+            OfferDetailView(offerID: "\(offer.id ?? 0)", isQRShow: isCart)
         }
     }
 
@@ -82,15 +82,21 @@ struct CartOfferView: View {
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             .frame(height: UIScreen.main.bounds.width * 9 / 16)
           //  deleteButton
-            deleteButton(for: cartId)
+            deleteButton(for: cartId, isfavorite: isFavourite)
         }
     }
 
-    private func deleteButton(for cartId: Int) -> some View {
+    private func deleteButton(for cartId: Int, isfavorite: Bool) -> some View {
         VStack {
             Button(action: {
                 let token = CustomerSession.shared.token ?? ""
-                viewModel.deleteCartOffer(cartId: cartId, token: token)
+                let itemID = isfavorite ? offer.id ?? 0 : cartId
+                if isfavorite {
+                    viewModel.faverouiteTogelApi(offerId: "\(itemID)")
+                } else {
+                    viewModel.deleteCartOffer(cartId: itemID, token: token)
+                }
+                
             }) {
                 Image("delete")
                       .resizable()
@@ -121,8 +127,8 @@ struct CartOfferView: View {
                         }
                     }
                     HStack {
-                      //  let itemQuantity = "\(offer.quantity)"
-                        Text("\(quantity) left") // Replace with dynamic value if needed
+                        let itemQuantity = (offer.isUnlimited == 1) ? "Until Stock Last" : "\(offer.quantity ?? 0) left"
+                        Text(itemQuantity)
                             .font(.footnote)
                             .foregroundColor(.black)
                             .padding(.horizontal, 12)
@@ -130,6 +136,7 @@ struct CartOfferView: View {
                             .background(Color.white)
                             .clipShape(RightSideRoundedShape())
                         Spacer()
+
                     }
                 }
             }
@@ -137,7 +144,9 @@ struct CartOfferView: View {
     }
     
     private var offerDetailsView: some View {
-            VStack(alignment: .leading, spacing: 10) {
+        ZStack {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top) {
                 Text(offer.title ?? "")
                     .font(.headline)
                     .fixedSize(horizontal: false, vertical: true)
@@ -145,31 +154,33 @@ struct CartOfferView: View {
                     .background(GeometryReader { geo in
                         Color.clear.onAppear { titleHeight = geo.size.height }
                     })
+                Spacer()
+                let averageRating = Int(Double(offer.average_rating ?? "0") ?? 0.0)//Int(Double(offer.average_rating ?? 0))
+                RatingView(rating: .constant(averageRating), isInteractive: false, starSize: 14)
+            }
 
-                HStack(alignment: .top) {
-                    Image("markerBlack")
-                        .foregroundColor(.black)
-                    Text(offer.subheading ?? "")
-                        .font(.subheadline)
-                        .foregroundColor(.black)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineLimit(nil)
-                        .background(GeometryReader { geo in
-                            Color.clear.onAppear { descriptionHeight = geo.size.height }
-                        })
-                }
-
-                DashedDivider()
-
-                HStack(spacing: 4) {
-                    Image("SaleRed")
-                        .foregroundColor(appThemeRedColor)
-                    Text(offer.description ?? "")
-                        .font(.footnote)
-                        .foregroundColor(.black)
-                        .cornerRadius(5)
-                }
-                
+            HStack(alignment: .top) {
+                Image("markerBlack")
+                    .foregroundColor(.black)
+                Text(offer.subheading ?? "")
+                    .font(.subheadline)
+                    .foregroundColor(.black)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(nil)
+                    .background(GeometryReader { geo in
+                        Color.clear.onAppear { descriptionHeight = geo.size.height }
+                    })
+            }
+            DashedDivider()
+            HStack(spacing: 4) {
+                Image("SaleRed")
+                    .foregroundColor(appThemeRedColor)
+                Text(offer.description ?? "")
+                    .font(.footnote)
+                    .foregroundColor(.black)
+                    .cornerRadius(5)
+            }
+            if isCart {
                 Button(action: {
                     showQRSheet  = true
                 }) {
@@ -181,25 +192,34 @@ struct CartOfferView: View {
                         .background(Color.red.opacity(0.1))
                         .cornerRadius(12)
                 }
-
             }
-            .padding()
-            .sheet(isPresented: $showQRSheet) {
-                QRCodePopupView(
-                    customerId: CustomerSession.shared.customerID ?? 0,
-                    offerId: offer.id ?? 0,
-                    isQrCodeSavedToCart: true,
-                    onGoBackToHome: {
-                       // navigateToHome = true
-                    }, onSaveToCart: {
-                        //isQRCodeSaved = true
-                    }
-                ).presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.hidden)
+        }
+        .padding()
+            if !isCart {
+                Button(action: {
+                    print("Offer details tapped")
+                    navigateToDetail = true
+                    // Your action here
+                }) {
+                    Color.clear
+                }
             }
-
+      
+    }  .sheet(isPresented: $showQRSheet) {
+        QRCodePopupView(
+            customerId: CustomerSession.shared.customerID ?? 0,
+            offerId: offer.id ?? 0,
+            isQrCodeSavedToCart: true,
+            onGoBackToHome: {
+                // navigateToHome = true
+            }, onSaveToCart: {
+                //isQRCodeSaved = true
+            }
+        ).presentationDetents([.medium, .large])
+            .presentationDragIndicator(.hidden)
     }
 
+}
 
     private func handleVisibilityChange(isVisible: Bool) {
         if !isVisible {
@@ -223,6 +243,41 @@ struct CartOfferView: View {
         }
     }
     
+//    private func imageView(for media: Media, index: Int) -> some View {
+//        ZStack {
+//            if videoThumbnailCache[index] == nil {
+//                Color.gray.opacity(0.1)
+//            }
+//            if let image = videoThumbnailCache[index] {
+//                Image(uiImage: image)
+//                    .resizable()
+//                    .scaledToFill()
+//                    .frame(maxWidth: .infinity)
+//                    .clipped()
+//            } else {
+//                ProgressView()
+//                    .task {
+//                        let mediaUrl = media.url ?? ""
+//                        if let cached = VideoThumbnailCache.shared.object(forKey: mediaUrl as NSString) {
+//                            videoThumbnailCache[index] = cached
+//                        } else {
+//                            Task.detached(priority: .background) {
+//                                if let image = await loadImage(from: mediaUrl) {
+//                                    await MainActor.run {
+//                                        videoThumbnailCache[index] = image
+//                                        VideoThumbnailCache.shared.setObject(image, forKey: mediaUrl as NSString)
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//            }
+//        }
+//        .tag(index)
+//        .frame(height: UIScreen.main.bounds.width * 9 / 16)
+//        .clipped()
+//    }
+    
     private func imageView(for media: Media, index: Int) -> some View {
         ZStack {
             if videoThumbnailCache[index] == nil {
@@ -236,8 +291,13 @@ struct CartOfferView: View {
                     .frame(maxWidth: .infinity)
                     .clipped()
             } else {
-                ProgressView()
-                    .task {
+                Image("gallary")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+                    .onAppear {
+                        // Load only if not already cached
                         let mediaUrl = media.url ?? ""
                         if let cached = VideoThumbnailCache.shared.object(forKey: mediaUrl as NSString) {
                             videoThumbnailCache[index] = cached
@@ -246,7 +306,7 @@ struct CartOfferView: View {
                                 if let image = await loadImage(from: mediaUrl) {
                                     await MainActor.run {
                                         videoThumbnailCache[index] = image
-                                        VideoThumbnailCache.shared.setObject(image, forKey: mediaUrl as! NSString)
+                                        VideoThumbnailCache.shared.setObject(image, forKey: mediaUrl as NSString)
                                     }
                                 }
                             }

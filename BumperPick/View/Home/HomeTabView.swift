@@ -17,8 +17,6 @@ struct HomeTabView: View {
     @State private var navigateToOfferBanner = false
     
     @State private var selectedTab: HomeTab
-
-
         // Updated initializer
         init(startingTab: HomeTab = .home) {
             _selectedTab = State(initialValue: startingTab)
@@ -51,7 +49,7 @@ struct HomeTabView: View {
                     Text("Home")
                         .font(.caption)
                 }
-                .foregroundColor(selectedTab == .home ? .blue : .gray)
+                .foregroundColor(selectedTab == .home ? Color(AppString.colorPrimaryColor) : .gray)
                 .onTapGesture {
                     selectedTab = .home
                 }
@@ -81,11 +79,16 @@ struct HomeTabView: View {
 
                 
                 VStack {
-                    Image(systemName: "person")
-                    Text("Account")
+                   // Image(systemName: "person")
+                    Image("more")
+                        .resizable()
+                        .rotationEffect(.degrees(90))
+                         .aspectRatio(contentMode: .fit)
+                         .frame(width: 20, height: 20)
+                    Text("More")
                         .font(.caption)
                 }
-                .foregroundColor(selectedTab == .account ? .blue : .gray)
+                .foregroundColor(selectedTab == .account ? Color(AppString.colorPrimaryColor) : .gray)
                 .onTapGesture {
                     selectedTab = .account
                 }
@@ -93,11 +96,6 @@ struct HomeTabView: View {
             }
             .padding(.top, 8)
             .padding(.bottom, 16)
-            
-            
-            .padding(.top, 8)
-            .padding(.bottom, 16)
-
         }
         .ignoresSafeArea(edges: .top)
         .navigationBarHidden(true)

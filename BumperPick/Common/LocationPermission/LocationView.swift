@@ -132,9 +132,14 @@ struct LocationPermissionModifier: ViewModifier {
         .onAppear {
             updatePermissionPopup()
         }
-        .onChange(of: locationManager.authorizationStatus) { _ in
+//        .onChange(of: locationManager.authorizationStatus) { _ in
+//            updatePermissionPopup()
+//        }
+        .onChange(of: locationManager.authorizationStatus) { oldValue, newValue in
+            // optional comparison logic
             updatePermissionPopup()
         }
+
     }
 
     private func updatePermissionPopup() {

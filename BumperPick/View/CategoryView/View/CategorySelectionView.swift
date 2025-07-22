@@ -23,8 +23,6 @@ struct CategorySelectionView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-              //  headerSection
-               // CategoryHeaderView()
                 CategoryHeaderView(searchText: $searchText)
                 categoryHeaderTitleSection()
                 ScrollView {

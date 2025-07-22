@@ -11,9 +11,13 @@ let appThemeRedColor:Color = Color(AppString.colorPrimaryColor)
 
 
 enum AppString {
+    //http://13.127.116.133/
+    //http://13.235.83.148/
+//    static let baseUrl = "http://13.127.116.133/api/customer/"
+    static let baseUrl = "http://13.235.83.148/api/customer/"
 
-    static let baseUrl = "http://13.50.109.14/api/customer/"
-    static let categoriesApi = "http://13.50.109.14/api/categories"
+  //  static let baseUrl = "http://13.50.109.14/api/customer/"
+    static let categoriesApi = "http://13.235.83.148/api/categories"//"http://13.50.109.14/api/categories"
     static let verifyOtpApi = "verify-otp"
     static let resendOtpApi = "resend-otp"
     static let sendOtpApi = "send-otp"
@@ -21,7 +25,7 @@ enum AppString {
     static let fetchCategories = "categories"
     static let googleLoginApi = "auth-google"
     static let createOfferApi = "offers-store"
-    static let offerApi = "http://13.50.109.14/api/offers"
+    static let offerApi = "http://13.235.83.148/api/offers"//"http://13.50.109.14/api/offers"
     static let offerRemoveApi = "offers-destroy"
     static let OfferCustomerApi = "offers"
     static let saveToCartApi = "cart-offers/create"
@@ -30,8 +34,22 @@ enum AppString {
     static let customerProfile = "profile"
     static let customerProfileUpdate = "profile/update"
     static let refreshTokenApi = "refresh-token"
-
-
+    static let getEventApi = "events"
+    static let eventRegisterApi = "event-registers/store"
+    static let offerHistoryApi = "offers-history"
+    static let getCampaignApi = "campaigns"
+    static let campaignRegisterApi = "campaign-registers/store"
+    static let feddbackRatingApi = "promotion-reviews/store"
+    static let offerDetailsApies = "offers-details"
+    static let favrouiteApi = "favourites/toggle"
+    static let unFavrouiteApi = "favourites/toggle"
+    static let favouriteListApi = "favourites/my"
+    static let trendingSearchApi = "trending-searches"
+    static let faqApi = "faqs"
+    static let ticketCreateApi = "tickets/store"
+    static let customerTicketApi = "tickets"
+    static let replyApi = "reply"
+    
     // string constant
     static let appName = "BumperPick"
     static let yourGatewayToStunningOffer = "Your gateway to stunning \noffers!"

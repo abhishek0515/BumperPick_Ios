@@ -27,7 +27,6 @@ struct SubCategoryListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-
             CustomHeaderViewNew(
                 title: category.name,
                 showBackButton: true,
@@ -48,22 +47,13 @@ struct SubCategoryListView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
             }
-            
-            NavigationLink(
-                destination: selectedSubCategoryID.map { subID in
-                    HomeView(categoryID: category.id, subCategoryID: subID)
-                },
-                isActive: $navigateToHome
-            ) {
-                EmptyView().hidden()
-            }
-
-
             Spacer()
         }
         .background(Color(UIColor.systemGroupedBackground))
         .navigationBarHidden(true)
-      //  .edgesIgnoringSafeArea(.top)
+        .navigationDestination(isPresented: $navigateToHome) {
+            HomeView(categoryID: category.id, subCategoryID: 9)
+        }
     }
 
     // MARK: - Title Header
@@ -110,7 +100,7 @@ struct SubCategoryListView: View {
 
     private func subCategoryRow(for sub: SubCategory) -> some View {
         Button {
-            selectedSubCategoryID = sub.id
+            selectedSubCategoryID = 9//sub.id
             navigateToHome = true
         } label: {
             HStack(spacing: 12) {
@@ -142,16 +132,17 @@ struct SubCategoryListView: View {
     }
 }
 
-
 struct CustomHeaderViewNew: View {
     let title: String
     let showBackButton: Bool
     let backAction: () -> Void
-    @Binding var searchText: String   // ✅ Add this line
-    let searchPlaceholder: String //Search subcategory
+    @Binding var searchText: String
+    let searchPlaceholder: String
+    var showSearchBar: Bool = true  // ✅ New optional param
+
     var body: some View {
         VStack(spacing: 12) {
-            // 🔙 Back button + title
+            // 🔙 Back + Title
             HStack {
                 if showBackButton {
                     Button(action: backAction) {
@@ -170,22 +161,24 @@ struct CustomHeaderViewNew: View {
             }
             .padding(.horizontal)
 
-            // 🔍 Search bar
-            HStack {
-                Image(systemName: "magnifyingglass").foregroundColor(.gray)
-                TextField(searchPlaceholder, text: $searchText)
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
+            // 🔍 Optional Search bar
+            if showSearchBar {
+                HStack {
+                    Image(systemName: "magnifyingglass").foregroundColor(.gray)
+                    TextField(searchPlaceholder, text: $searchText)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                }
+                .padding(10)
+                .background(Color.white)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                )
+                .padding(.horizontal)
+                .padding(.bottom, 8)
             }
-            .padding(10)
-            .background(Color.white)
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-            )
-            .padding(.horizontal)
-            .padding(.bottom, 8)
         }
         .padding(.top, 50)
         .padding(.bottom, 12)

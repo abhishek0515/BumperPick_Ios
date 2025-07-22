@@ -22,6 +22,7 @@ struct EditProfileView: View {
     @State private var phoneNumber: String
     @State private var email: String
     var imageURL: String?
+    @EnvironmentObject var customerSession: CustomerSession
 
     init(name: String, phone: String, email: String, imageURL: String?) {
            _fullName = State(initialValue: name)
@@ -61,8 +62,19 @@ struct EditProfileView: View {
                         .font(.title3).bold()
                         .frame(maxWidth: .infinity, alignment: .leading)
                     formField("Your full name", text: $fullName)
-                    phoneNumberField
-                    emailField
+                    
+                    if let loginMethod = customerSession.loginMethod {
+                        if loginMethod == .google {
+                            phoneNumberField
+                            ReadOnlyField(label: "Email ID", text: email)
+                        } else {
+                            ReadOnlyField(label: "Mobile Number", text: phoneNumber)
+                            emailField
+                        }
+
+                    }
+//                    phoneNumberField
+//                    emailField
                 }
                 .padding()
                 .padding(.vertical)
@@ -192,7 +204,7 @@ struct EditProfileView: View {
                     .offset(x: -4, y: -4)
             }
         }
-        .onChange(of: selectedItem) { newItem in
+        .onChange(of: selectedItem) { oldValue, newItem in
             guard let newItem else { return }
             Task {
                 if let data = try? await newItem.loadTransferable(type: Data.self),
@@ -203,8 +215,6 @@ struct EditProfileView: View {
             }
         }
     }
-
-
 
     // MARK: - Reusable Fields
     private func formField(_ label: String, text: Binding<String>) -> some View {

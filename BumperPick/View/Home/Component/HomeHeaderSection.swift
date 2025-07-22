@@ -13,7 +13,7 @@ struct HomeHeaderSection: View {
     @StateObject private var locationManager = LocationManager()
     @Binding var searchText: String
     var onSearchTapped: () -> Void  // ✅ New callback
-
+    @State private var navigateToFavourite = false
     
     var body: some View {
         VStack(spacing: 16) {
@@ -43,7 +43,9 @@ struct HomeHeaderSection: View {
                     Button { navigateToCart = true } label: {
                         Image(systemName: "cart").foregroundColor(.white)
                     }
-                    Button(action: {}) {
+                    Button(action: {
+                        navigateToFavourite = true
+                    }) {
                         Image(systemName: "heart").foregroundColor(.white)
                     }
                     Button(action: {}) {
@@ -63,36 +65,36 @@ struct HomeHeaderSection: View {
                     .onTapGesture {
                         onSearchTapped()
                     }
-                    .onChange(of: searchText) { _ in
+                    .onChange(of: searchText) { oldValue, newValue in
                         onSearchTapped()
                     }
-
             }
             .padding()
             .background(Color.white)
             .cornerRadius(10)
             .shadow(color: .gray.opacity(0.1), radius: 4)
             .padding(.horizontal)
-
-            // 🔹 Navigate to cart
-            NavigationLink(destination: CartView(), isActive: $navigateToCart) {
-                EmptyView()
-            }
-
             // 🔹 Dynamic Categories
             if !categories.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(categories, id: \.id) { category in
-                            categoryButton(title: category.name, imageUrl: category.imageURL)
+                          //  categoryButton(title: category.name, imageUrl: category.imageURL)
+                            NavigationLink(destination: SubCategoryListView(category: category)) {
+                                categoryButton(title: category.name, imageUrl: category.imageURL)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding()
                     .padding(.horizontal)
                     .padding(.top, -15)
                 }
-               // .padding(.top, 10)
             }
+            // Add spacing only if there's location data
+//            if !locationTitle.isEmpty || !locationSubtitle.isEmpty {
+//                Spacer().frame(height: 10)
+//            }
         }
         .padding(.top, 50)
         .background(
@@ -107,6 +109,12 @@ struct HomeHeaderSection: View {
         )
 
         .clipShape(RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight]))
+        .navigationDestination(isPresented: $navigateToCart) {
+            CartView(isCart: true, isFavourite: false)
+        }
+        .navigationDestination(isPresented: $navigateToFavourite) {
+            CartView(isCart: false, isFavourite: true)
+        }
     }
 
     func categoryButton(title: String, imageUrl: String?) -> some View {
@@ -180,9 +188,13 @@ struct HomeHeaderSection: View {
          return ""
      }
     
-//    if let location = locationManager.currentLocation {
-//        Text("Lat: \(location.coordinate.latitude), Lon: \(location.coordinate.longitude)")
-//    }
+    private var latLongText: String {
+        if let location = locationManager.currentLocation {
+            return "Lat: \(location.coordinate.latitude), Lon: \(location.coordinate.longitude)"
+        }
+        return "Fetching location..."
+    }
+
     
 }
 

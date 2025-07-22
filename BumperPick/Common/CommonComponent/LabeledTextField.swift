@@ -71,6 +71,31 @@ struct LabeledTextEditor: View {
     }
 }
 
+// Read only field not editable
+struct ReadOnlyField: View {
+    let label: String
+    let text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.footnote)
+                .foregroundColor(.gray)
+
+            Text(text)
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white)
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                )
+        }
+    }
+}
+
+
 //MARK:  common one loader we can call this on everywhere just with vStack {}.withLoader(.isloading)
 struct LoadingViewModifier: ViewModifier {
     let isLoading: Bool

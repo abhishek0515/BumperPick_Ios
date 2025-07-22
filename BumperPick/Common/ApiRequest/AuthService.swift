@@ -92,14 +92,20 @@ final class APIManager {
             }
 
             // Debug
-            if let rawJSON = try? JSONSerialization.jsonObject(with: data) {
-                print("📦 [Raw JSON]:", rawJSON)
+//            if let rawJSON = try? JSONSerialization.jsonObject(with: data) {
+//                print("📦 [Raw JSON]:", rawJSON)
+//            }
+            
+            if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
+               let prettyData = try? JSONSerialization.data(withJSONObject: jsonObject, options: .prettyPrinted),
+               let prettyString = String(data: prettyData, encoding: .utf8) {
+                print("📦 [Raw JSON String]:\n\(prettyString)")
             }
 
             // MARK: Decode response
             do {
                 let decoded = try JSONDecoder().decode(T.self, from: data)
-                print("✅ [Decoded]:", decoded)
+               // print("✅ [Decoded]:", decoded)
                 DispatchQueue.main.async {
                     completion(.success(decoded))
                 }
@@ -118,6 +124,46 @@ final class APIManager {
     }
 
     // MARK: - Refresh Token API
+//    private func refreshToken(completion: @escaping (Bool) -> Void) {
+//        guard let currentToken = CustomerSession.shared.token else {
+//            print("❌ No token found for refresh")
+//            completion(false)
+//            return
+//        }
+//
+//        let refreshURLString = AppString.baseUrl + AppString.refreshTokenApi + "?token=\(currentToken)"
+//        guard let url = URL(string: refreshURLString) else {
+//            completion(false)
+//            return
+//        }
+//
+//        print("🔄 Refreshing token: \(url.absoluteString)")
+//
+//        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+//            guard let data = data, error == nil else {
+//                print("❌ Refresh token request failed:", error?.localizedDescription ?? "Unknown error")
+//                completion(false)
+//                return
+//            }
+//
+//            do {
+//                let tokenResponse = try JSONDecoder().decode(RefreshTokenResponse.self, from: data)
+//              //  print("✅ Token refreshed:", tokenResponse.token)
+//                CustomerSession.shared.token = tokenResponse.meta.token
+//                completion(true)
+//            } catch {
+//                print("❌ Failed to decode token:", error.localizedDescription)
+//                if let jsonString = String(data: data, encoding: .utf8) {
+//                    print("🔍 failed JSON (for debugging):\n\(jsonString)")
+//                }
+//
+//                completion(false)
+//            }
+//        }
+//
+//        task.resume()
+//    }
+    
     private func refreshToken(completion: @escaping (Bool) -> Void) {
         guard let currentToken = CustomerSession.shared.token else {
             print("❌ No token found for refresh")
@@ -125,15 +171,21 @@ final class APIManager {
             return
         }
 
-        let refreshURLString = AppString.baseUrl + AppString.refreshTokenApi + "?token=\(currentToken)"
-        guard let url = URL(string: refreshURLString) else {
+        guard let url = URL(string: AppString.baseUrl + AppString.refreshTokenApi) else {
             completion(false)
             return
         }
 
-        print("🔄 Refreshing token: \(url.absoluteString)")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        let body: [String: String] = ["token": currentToken]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        print("🔄 Refreshing token with body: \(body)")
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data, error == nil else {
                 print("❌ Refresh token request failed:", error?.localizedDescription ?? "Unknown error")
                 completion(false)
@@ -142,17 +194,20 @@ final class APIManager {
 
             do {
                 let tokenResponse = try JSONDecoder().decode(RefreshTokenResponse.self, from: data)
-                print("✅ Token refreshed:", tokenResponse.token)
-                CustomerSession.shared.token = tokenResponse.token
+                CustomerSession.shared.token = tokenResponse.meta.token
                 completion(true)
             } catch {
                 print("❌ Failed to decode token:", error.localizedDescription)
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("🔍 failed JSON (for debugging):\n\(jsonString)")
+                }
                 completion(false)
             }
         }
 
         task.resume()
     }
+
 }
 
 enum APIError: Error {
@@ -162,6 +217,39 @@ enum APIError: Error {
     case unknown(Error)
 }
 
+
 struct RefreshTokenResponse: Codable {
-    let token: String
+    let data: TokenCustomerData
+    let code: Int
+    let message: String
+    let meta: TokenMeta
 }
+
+struct TokenCustomerData: Codable {
+    let customerID: Int
+    let phoneNumber: String
+    let email: String
+
+    enum CodingKeys: String, CodingKey {
+        case customerID = "customer_id"
+        case phoneNumber = "phone_number"
+        case email
+    }
+}
+
+struct TokenMeta: Codable {
+    let token: String
+    let tokenType: String
+    let expiresIn: Int
+
+    enum CodingKeys: String, CodingKey {
+        case token
+        case tokenType = "token_type"
+        case expiresIn = "expires_in"
+    }
+}
+
+
+//struct RefreshTokenResponse: Codable {
+//    let token: String
+//}

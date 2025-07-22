@@ -19,3 +19,8 @@ func isNumberValid(_ number: String) -> Bool {
       let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailFormat)
       return emailPredicate.evaluate(with: email)
 }
+
+ func isValidPhone(_ phone: String) -> Bool {
+    let phoneRegex = "^(\\+91)?[0-9]\\d{9}$"
+    return NSPredicate(format: "SELF MATCHES %@", phoneRegex).evaluate(with: phone.replacingOccurrences(of: " ", with: ""))
+}

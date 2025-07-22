@@ -16,7 +16,7 @@ struct UserProfile: Codable {
     let id: Int
     let imageURL: String?
     let name: String?
-    let phoneNumber: String
+    let phoneNumber: String?
     let email: String?
 
     enum CodingKeys: String, CodingKey {

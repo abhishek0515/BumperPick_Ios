@@ -10,7 +10,7 @@ import Combine
 
 class LoginViewModel: ObservableObject {
     @Published var countryCode = "+91"
-    @Published var phoneNumber = "7498324730"
+    @Published var phoneNumber = "1234567890"
     @Published var isTermsAccepted = false
     @Published var showAlert = false
     @Published var alertMessage = ""
@@ -112,7 +112,7 @@ class LoginViewModel: ObservableObject {
                 switch result {
                 case .success(let response):
                     print("Login Success:", response.message)
-                    CustomerSession.shared.saveSession(from: response)
+                    CustomerSession.shared.saveSession(from: response, method: .google)
                     self.alertTitle = "Success"
                     self.alertMessage = response.message
                     self.showAlert = true
